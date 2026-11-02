@@ -121,13 +121,25 @@ def _filter_rows_by_allowed_chunk_types(
     if allowed_chunk_types is None:
         return rows
 
+    def _target_chunk_type_ok(target_id: str) -> bool:
+        """Check if a connected target chunk has an allowed type.
+
+        Returns True if the target exists in rows_by_chunk_id and its chunk_type
+        is in allowed_chunk_types.  Missing targets are conservatively treated as
+        not‑matching so that rows are not incorrectly excluded or included when
+        the target chunk is simply not present in the current scope.
+        """
+        target_row = rows_by_chunk_id.get(target_id)
+        if target_row is None:
+            return False
+        return normalize_chunk_type(target_row.get('chunk_type')) in allowed_chunk_types
+
     return [
         row
         for row in rows
         if normalize_chunk_type(row.get('chunk_type')) in allowed_chunk_types
         or any(
-            normalize_chunk_type(rows_by_chunk_id.get(target_id, {}).get('chunk_type'))
-            in allowed_chunk_types
+            _target_chunk_type_ok(target_id)
             for target_id in iter_connected_target_ids(row)
         )
     ]

@@ -272,7 +272,7 @@ async def map_unit_discovery(
 
     is_unfiltered_scope: bool = not any(
         (
-            chunk_types,
+            chunk_types is not None and chunk_types,
             signal_paths,
             section_clause,
             exclude_sections,
